@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All In One Predictor</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: white;
+            overflow: hidden;
+        }
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            color: red;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .timer-section {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        .predictions {
+            text-align: center;
+            margin: 20px;
+        }
+        .history {
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .history ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .history li {
+            margin: 5px 0;
+        }
+        .button {
+            text-align: center;
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: red;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particles"></canvas>
+    
+    <div class="header">ALL IN ONE PREDICTOR</div>
+    
+    <div class="timer-section">
+        <div id="textview1"></div>
+        <div id="textview2"></div>
+    </div>
+    
+    <div class="predictions">
+        <div id="result">
+            <strong>Prediction:</strong> <span id="prediction"></span>
+        </div>
+        
+        <div class="button">
+            <button onclick="makePrediction()">Predict</button>
+        </div>
+    </div>
+    
+    <div class="history">
+        <h3>History of Predictions</h3>
+        <ul id="history-list">
+        </ul>
+    </div>
+    
+    <script>
+        const textview1 = document.getElementById('textview1');
+        const textview2 = document.getElementById('textview2');
+        const predictionDisplay = document.getElementById('prediction');
+        const historyList = document.getElementById('history-list');
+
+        let lastPredictedPeriod = null;
+
+        function updateTimer() {
+            const calendar = new Date();
+            const startHour = 5;
+            const startMinute = 30;
+
+            const currentHour = calendar.getHours();
+            const currentMinute = calendar.getMinutes();
+            const seconds = calendar.getSeconds();
+
+            const elapsedSeconds = (currentHour * 3600 + currentMinute * 60 + seconds) - 
+                (startHour * 3600 + startMinute * 60);
+            const effectiveElapsedSeconds = elapsedSeconds < 0 ? 0 : elapsedSeconds;
+
+            const totalPeriods = Math.floor(effectiveElapsedSeconds / 30);
+            const upcomingPeriod = totalPeriods + 1;
+
+            const formattedDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const periodNumber = `100005${String(upcomingPeriod).padStart(4, '0')}`;
+            textview1.innerText = `${formattedDate}${periodNumber}`;
+
+            const remainingSeconds = 30 - (seconds % 30);
+            textview2.innerText = `Time Left: ${remainingSeconds}s`;
+        }
+
+        function makePrediction() {
+            const currentPeriod = textview1.innerText;
+
+            if (lastPredictedPeriod === currentPeriod) {
+                predictionDisplay.innerText = "Wait for the next period.";
+                return;
+            }
+
+            const random = Math.floor(Math.random() * 10);
+            const isOdd = random % 2 !== 0;
+            const color = isOdd ? 'Green' : 'Red';
+            const emoji = isOdd ? '🟢' : '🔴';
+            const size = random <= 4 ? 'SMALL' : 'BIG';
+
+            predictionDisplay.innerText = `Number: ${random} (${color} ${emoji}), Size: ${size}`;
+
+            const historyItem = document.createElement('li');
+            historyItem.innerText = `Period: ${currentPeriod}, Number: ${random}, Color: ${color} ${emoji}, Size: ${size}`;
+            historyList.appendChild(historyItem);
+
+            lastPredictedPeriod = currentPeriod;
+        }
+
+        setInterval(updateTimer, 1000);
+
+        const canvas = document.getElementById("particles");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = [];
+        const particleCount = 100;
+
+        class Particle {
+            constructor(x, y, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.size = Math.random() * 3 + 1;
+
+                const colors = ["#FFA500", "#FF4500", "#FF0000", "#FFFFE0"];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x > canvas.width || this.x < 0) this.vx *= -1;
+                if (this.y > canvas.height || this.y < 0) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        function connectParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = "rgba(255, 69, 0, 0.2)";
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach((particle) => {
+                particle.update();
+                particle.draw();
+            });
+            connectParticles();
+            requestAnimationFrame(animate);
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(
+                new Particle(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    Math.random() * 2 - 1,
+                    Math.random() * 2 - 1
+                )
+            );
+        }
+
+        animate();
+    </script>
+</body>
+</html>
